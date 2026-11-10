@@ -11,7 +11,7 @@ Executar o fluxo completo em uma **feature branch**, seguindo a ordem **PRD → 
 1. **PRD:** definir o problema, escopo, requisitos e critérios de aceite.
 2. **TDD:** detalhar as decisões técnicas e o roadmap de implementação com base no PRD.
 3. **SDD:** detalhar a solução a ser implementada, mantendo rastreabilidade com PRD e TDD. Se ainda não existir, elaborá-lo antes de abrir o PR; não presumir sua aprovação.
-4. **Pull Request:** implementar na feature branch, apresentar a mudança, vincular PRD, TDD e SDD, registrar testes e riscos e solicitar revisão. Não tratar a abertura ou aprovação do PR como substituto das validações pendentes nos documentos.
+4. **Pull Request:** implementar na feature branch, apresentar a mudança, vincular PRD, TDD e SDD, registrar testes e riscos e solicitar revisão. Organizar cada PR em commits pequenos, coesos e focados: uma intenção por commit, mensagens descritivas, infraestrutura/testes/docs separados quando fizer sentido, cada commit verificável e sem alterações não relacionadas, preservando a revisão rastreável PRD → TDD → SDD. Não tratar a abertura ou aprovação do PR como substituto das validações pendentes nos documentos.
 5. **Integração:** após a revisão, as aprovações e as verificações necessárias, integrar a feature branch na `main` por meio do Pull Request. Não fazer merge com bloqueios pendentes nem contornar as proteções do repositório; se não for possível concluir a integração, informar o impedimento e o estado do PR.
 
 Se uma etapa exigir revisão, atualizar os artefatos afetados antes de avançar, preservando a coerência entre eles.
