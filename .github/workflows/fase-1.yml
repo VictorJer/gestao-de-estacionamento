@@ -1,0 +1,92 @@
+name: Fase 1 - fundacao
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      sql:
+        image: mcr.microsoft.com/mssql/server:2022-CU22-ubuntu-22.04
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: ${{ secrets.FASE1_SQL_TEST_PASSWORD }}
+        ports:
+          - 1433:1433
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: backend/global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Restore and build .NET
+        run: dotnet build backend/Estacionamento.slnx
+      - name: Verify .NET formatting
+        run: dotnet format backend/Estacionamento.slnx --verify-no-changes --no-restore
+      - name: Test .NET with real SQL Server
+        env:
+          ESTACIONAMENTO_TEST_SQL: Server=localhost,1433;User Id=sa;Password=${{ secrets.FASE1_SQL_TEST_PASSWORD }};Encrypt=True;TrustServerCertificate=True
+        run: dotnet test backend/Estacionamento.slnx --no-build --logger "console;verbosity=quiet"
+      - name: Install and audit frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm audit --audit-level=high
+      - name: Vitest and build
+        working-directory: frontend
+        run: |
+          npm test -- --watch=false
+          npm run build
+      - name: Install Playwright and audit
+        working-directory: tests/e2e
+        run: |
+          npm ci
+          npm audit --audit-level=high
+          npx playwright install --with-deps chromium
+      - name: Compose isolated edge and SQL
+        env:
+          ESTACIONAMENTO_SQL_PASSWORD: ${{ secrets.FASE1_SQL_TEST_PASSWORD }}
+        run: docker compose up --build -d
+      - name: Wait for HTTPS edge
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --insecure https://localhost:8444/api/v1/session/antiforgery >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: Provision disposable employee without logging credentials
+        env:
+          ESTACIONAMENTO_SQL_PASSWORD: ${{ secrets.FASE1_SQL_TEST_PASSWORD }}
+        run: |
+          set +x
+          mkdir -p local-secrets
+          python3 - <<'PY'
+          import json, os, secrets
+          user = 'ci.' + secrets.token_hex(6)
+          password = secrets.token_urlsafe(24) + 'aA1!'
+          with open('local-secrets/test-credentials.json', 'w') as file:
+              json.dump({'username': user, 'password': password}, file)
+          with open(os.environ['GITHUB_ENV'], 'a') as file:
+              file.write('ESTACIONAMENTO_TEST_USER=' + user + '\n')
+              file.write('ESTACIONAMENTO_TEST_PASSWORD=' + password + '\n')
+              file.write('ESTACIONAMENTO_TEST_ROLE=caixa\n')
+          PY
+          docker compose --profile test-user run --build --rm provision >/dev/null
+      - name: Playwright against isolated HTTPS edge
+        working-directory: tests/e2e
+        env:
+          ESTACIONAMENTO_SQL_PASSWORD: ${{ secrets.FASE1_SQL_TEST_PASSWORD }}
+          ESTACIONAMENTO_EDGE_URL: https://localhost:8444
+          ESTACIONAMENTO_REAL_SESSION: '1'
+          ESTACIONAMENTO_RESTART_TEST: '1'
+        run: npm test
+      - name: Stop containers without deleting test data
+        if: always()
+        env:
+          ESTACIONAMENTO_SQL_PASSWORD: ${{ secrets.FASE1_SQL_TEST_PASSWORD }}
+        run: docker compose stop
