@@ -1,0 +1,12 @@
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/.angular
+**/test-results
+**/playwright-report
+.env
+.git
+local-secrets
+docs
+openspec

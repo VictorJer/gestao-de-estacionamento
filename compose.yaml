@@ -1,0 +1,86 @@
+name: estacionamento-fase-1
+services:
+  certificates:
+    image: alpine/openssl:3.5.4
+    volumes:
+      - certificates:/certs
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["test -s /certs/dev.crt || openssl req -x509 -newkey rsa:2048 -nodes -days 2 -keyout /certs/dev.key -out /certs/dev.crt -subj /CN=localhost -addext 'subjectAltName=DNS:localhost,DNS:api' && chmod 644 /certs/dev.key"]
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-CU22-ubuntu-22.04
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: ${ESTACIONAMENTO_SQL_PASSWORD:?Set a local temporary SQL password in .env}
+    networks:
+      private:
+        ipv4_address: 172.30.96.12
+    volumes:
+      - sql-data:/var/opt/mssql
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: https://+:8443
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /certs/dev.crt
+      ASPNETCORE_Kestrel__Certificates__Default__KeyPath: /certs/dev.key
+      ConnectionStrings__DefaultConnection: Server=sql;Database=Estacionamento_Fase1_Container;User Id=sa;Password=${ESTACIONAMENTO_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True
+      Security__AllowedOrigin: https://localhost:8444
+      Security__KnownProxy: 172.30.96.10
+      Security__KeyRingDirectory: /app/keys
+      Logging__LogLevel__Microsoft__EntityFrameworkCore: Warning
+      Database__ApplyMigrations: 'true'
+    volumes:
+      - certificates:/certs:ro
+      - key-ring:/app/keys
+    networks:
+      private:
+        ipv4_address: 172.30.96.11
+    depends_on:
+      certificates:
+        condition: service_completed_successfully
+      sql:
+        condition: service_started
+  edge:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - '127.0.0.1:8444:443'
+    volumes:
+      - certificates:/certs:ro
+    depends_on:
+      certificates:
+        condition: service_completed_successfully
+      api:
+        condition: service_started
+    networks:
+      private:
+        ipv4_address: 172.30.96.10
+      public: {}
+  provision:
+    profiles: [test-user]
+    build:
+      context: .
+      dockerfile: backend/tools/Estacionamento.Provisioning/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Server=sql;Database=Estacionamento_Fase1_Container;User Id=sa;Password=${ESTACIONAMENTO_SQL_PASSWORD};Encrypt=True;TrustServerCertificate=True
+      ESTACIONAMENTO_TEST_USER: ${ESTACIONAMENTO_TEST_USER:-}
+      ESTACIONAMENTO_TEST_PASSWORD: ${ESTACIONAMENTO_TEST_PASSWORD:-}
+      ESTACIONAMENTO_TEST_ROLE: ${ESTACIONAMENTO_TEST_ROLE:-}
+      Logging__LogLevel__Microsoft__EntityFrameworkCore: Warning
+    networks: [private]
+    depends_on: [sql]
+networks:
+  private:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.30.96.0/24
+  public: {}
+volumes:
+  certificates:
+  sql-data:
+  key-ring:
