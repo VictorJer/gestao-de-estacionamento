@@ -1,0 +1,30 @@
+<main class="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-6 px-6 py-12">
+  <header class="flex items-center gap-4">
+    <img src="/icons/square-parking.svg" alt="" aria-hidden="true" class="h-12 w-12" />
+    <h1 class="text-3xl font-semibold text-slate-900">Gestão de Estacionamento</h1>
+  </header>
+  <p class="text-slate-700">Ambiente de desenvolvimento. A operação de estacionamento ainda não está disponível.</p>
+  <section aria-label="Sessão do funcionário" class="rounded-lg border border-slate-300 p-6">
+    @if (session.busy() && !session.authenticated()) {
+      <p role="status">Verificando sessão…</p>
+    }
+    @if (session.error()) {
+      <p role="alert" class="mb-4 text-red-800">{{ session.error() }}</p>
+    }
+    @if (session.authenticated()) {
+      <p role="status">Sessão ativa: {{ session.session()?.username }} ({{ session.session()?.roles?.join(', ') }})</p>
+      <button type="button" (click)="logout()" [disabled]="session.busy()" class="mt-4 rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">Sair</button>
+      <button type="button" (click)="session.refresh()" [disabled]="session.busy()" class="ml-4 underline">Verificar sessão</button>
+    } @else {
+      <h2 class="mb-4 text-xl font-medium">Entrar</h2>
+      <form (submit)="login($event)" class="flex max-w-sm flex-col gap-4">
+        <label for="username">Usuário</label>
+        <input id="username" type="text" autocomplete="username" [formField]="loginForm.username" class="rounded border p-2" />
+        <label for="password">Senha</label>
+        <input id="password" type="password" autocomplete="current-password" [formField]="loginForm.password" class="rounded border p-2" />
+        <button type="submit" [disabled]="session.busy() || loginForm().invalid()" class="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50">Entrar</button>
+      </form>
+    }
+  </section>
+  <router-outlet />
+</main>
