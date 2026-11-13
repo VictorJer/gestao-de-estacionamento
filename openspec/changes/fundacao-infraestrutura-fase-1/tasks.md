@@ -24,7 +24,7 @@
 
 ## 4. Entrega contínua e gates da fase
 
-- [ ] 4.1 Criar GitHub Actions com build/format, Vitest, MSTest unidade e integração em SQL Server real local/CI, Playwright com proxy/TLS e auditoria de dependências; verificar execução completa do workflow em PR sem segredos no log.
+- [x] 4.1 Criar GitHub Actions com build/format, Vitest, MSTest unidade e integração em SQL Server real local/CI, Playwright com proxy/TLS e auditoria de dependências; verificar execução completa do workflow em PR sem segredos no log. Evidência: run 43467964243 do PR #1 em 13/11/2026.
 - [x] 4.2 Documentar como iniciar e testar localmente SPA/proxy, API e SQL Server, aplicar migrações em banco descartável e reiniciar/reverter aplicativo sem apagar registros; verificar smoke test e comandos documentados no ambiente de desenvolvimento.
 - [x] 4.3 Registrar pendências de privacidade (finalidade, acesso, retenção/descarte), proteção/recuperação de chaves, backup, RPO/RTO, contingência, tarifa/moeda e parâmetros de sessão com responsáveis e bloqueio de produção; verificar checklist assinado/pendente sem declarar liberação.
 - [x] 4.4 Elaborar SDD da Fase 1 com rastreabilidade entre `docs/prd/PRD.md` (IDs vigentes), `docs/tdd/tdd.md`, specs e resultados dos testes locais/CI; verificar revisão do SDD antes de abrir PR, registrando homologação Azure como pendente.
