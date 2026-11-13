@@ -12,4 +12,8 @@ Verificações executadas:
 - `curl` pela borda com `X-User-Role: administrador` e `X-Forwarded-Proto: http` sem sessão: `401`, `Cache-Control: no-store`. HTTP em `:8444` não processou operação (`400` do listener TLS); conexão direta do host a `localhost:8443` falhou; `docker inspect` da API não mostrou portas publicadas.
 - Inspeção dos logs de API/edge por comparação com credencial de teste e marcadores de cookie/token: nenhuma ocorrência de senha, usuário de teste, `Estacionamento.Session=` ou `X-CSRF-TOKEN:`. O key ring permanece em volume Docker separado e reutilizado na reinicialização.
 
-Pendências: evidência equivalente no GitHub Actions, gestão/backup/rotação de chaves e certificados de produção, restauração, validação de topologia Azure e revisão de privacidade. Não usar esta evidência como aprovação de produção.
+## Evidência no GitHub Actions (13/11/2026)
+
+No PR #1, a [run 43467964243](https://github.com/VictorJer/gestao-de-estacionamento/actions/runs/43467964243) do commit `11dd4b9` concluiu o job `verify` com sucesso: build e formatação .NET; 1 teste unitário e 3 testes de integração com SQL Server real; instalação e auditoria de dependências frontend/E2E sem vulnerabilidades reportadas; 3 testes Vitest e build; inicialização do Compose com SQL/API/edge HTTPS, provisionamento de usuário descartável e 4 testes Playwright contra a borda HTTPS. A limpeza por `docker compose stop` também passou. As credenciais de provisionamento foram geradas no runner e repassadas ao Compose por arquivo ignorado pelo Git, sem registrar seus valores.
+
+Pendências: gestão/backup/rotação de chaves e certificados de produção, restauração, validação de topologia Azure e revisão de privacidade. Esta execução de CI não constitui aprovação de produção.
