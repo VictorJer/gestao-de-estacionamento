@@ -22,7 +22,7 @@ A aplicação ainda não possuía serviços executáveis ou verificação da aut
 
 ## Cenários e evidências
 
-`dotnet test backend/Estacionamento.slnx` verifica SQL Server real, login, cookie, expiração, logout, autorização e CSRF. `npm test -- --watch=false` (frontend) verifica UI/estado/interceptor; `npm test` (Playwright) verifica teclado e, quando `ESTACIONAMENTO_EDGE_URL` e credenciais de teste estão definidos, navegador real com SQL/HTTPS/proxy, falha CSRF, persistência após reinício e ausência de cookie de terceiros. Resultado local: 4/4 Playwright; detalhes e headers sanitizados em `docs/evidence/fase-1-local.md`. CI em `.github/workflows/fase-1.yml` ainda depende da execução no PR e do segredo de repositório `FASE1_SQL_TEST_PASSWORD`; não alegar CI aprovado até haver run verificável.
+`dotnet test backend/Estacionamento.slnx` verifica SQL Server real, login, cookie, expiração, logout, autorização e CSRF. `npm test -- --watch=false` (frontend) verifica UI/estado/interceptor; `npm test` (Playwright) verifica teclado e, quando `ESTACIONAMENTO_EDGE_URL` e credenciais de teste estão definidos, navegador real com SQL/HTTPS/proxy, falha CSRF, persistência após reinício e ausência de cookie de terceiros. Resultado local: 4/4 Playwright; detalhes e headers sanitizados em `docs/evidence/fase-1-local.md`. CI em `.github/workflows/fase-1.yml` depende do segredo de repositório `FASE1_SQL_TEST_PASSWORD`; a run 43467964243 do PR #1 passou em 13/11/2026, inclusive provisionamento e Playwright. Essa validação não substitui os gates de produção.
 
 ## Riscos, operação e aceite
 
