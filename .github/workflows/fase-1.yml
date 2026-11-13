@@ -64,19 +64,23 @@ jobs:
           ESTACIONAMENTO_SQL_PASSWORD: ${{ secrets.FASE1_SQL_TEST_PASSWORD }}
         run: |
           set +x
+          set -o pipefail
+          umask 077
           mkdir -p local-secrets
           python3 - <<'PY'
-          import json, os, secrets
+          import json, secrets
           user = 'ci.' + secrets.token_hex(6)
           password = secrets.token_urlsafe(24) + 'aA1!'
           with open('local-secrets/test-credentials.json', 'w') as file:
               json.dump({'username': user, 'password': password}, file)
-          with open(os.environ['GITHUB_ENV'], 'a') as file:
+          with open('local-secrets/provision.env', 'w') as file:
               file.write('ESTACIONAMENTO_TEST_USER=' + user + '\n')
               file.write('ESTACIONAMENTO_TEST_PASSWORD=' + password + '\n')
               file.write('ESTACIONAMENTO_TEST_ROLE=caixa\n')
           PY
-          docker compose --profile test-user run --build --rm provision >/dev/null
+          docker compose --env-file local-secrets/provision.env --profile test-user config --format json |
+            python3 -c 'import json, sys; env = json.load(sys.stdin)["services"]["provision"]["environment"]; assert all(env.get(key) for key in ("ESTACIONAMENTO_TEST_USER", "ESTACIONAMENTO_TEST_PASSWORD")) and env.get("ESTACIONAMENTO_TEST_ROLE") == "caixa", "Credenciais de provisionamento ausentes"'
+          docker compose --env-file local-secrets/provision.env --profile test-user run --build --rm provision >/dev/null
       - name: Playwright against isolated HTTPS edge
         working-directory: tests/e2e
         env:
